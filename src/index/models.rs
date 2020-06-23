@@ -4,6 +4,8 @@ use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use crate::models::CrateName;
+
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     pub dl: Url,
@@ -12,10 +14,10 @@ pub struct Config {
 
 #[derive(Serialize, Deserialize)]
 pub struct Release {
-    pub name: String,
+    pub name: CrateName,
     pub vers: Version,
     pub deps: Vec<Dependency>,
-    pub cksnum: String,
+    pub cksum: String,
     pub features: BTreeMap<String, BTreeSet<String>>,
     pub yanked: bool,
     pub links: Option<String>,
@@ -65,7 +67,7 @@ mod tests {
         println!(
             "{}",
             serde_json::to_string_pretty(&Release {
-                name: "foo".to_owned(),
+                name: "foo".parse().unwrap(),
                 vers: "0.1.0".parse().unwrap(),
                 deps: vec![Dependency {
                     name: "rand".to_owned(),
@@ -78,7 +80,7 @@ mod tests {
                     registry: None,
                     package: None,
                 }],
-                cksnum: "d867001db0e2b6e0496f9fac96930e2d42233ecd3ca0413e0753d4c7695d289c"
+                cksum: "d867001db0e2b6e0496f9fac96930e2d42233ecd3ca0413e0753d4c7695d289c"
                     .to_owned(),
                 features: btreemap! {
                     "extras".to_owned() => btreeset!["rand/simd_support".to_owned()],

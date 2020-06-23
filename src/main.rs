@@ -13,6 +13,7 @@ mod db;
 mod index;
 mod templates;
 mod ui;
+mod models;
 
 #[rocket::launch]
 fn rocket() -> Rocket {

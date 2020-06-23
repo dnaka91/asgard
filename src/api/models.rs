@@ -4,6 +4,8 @@ use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use crate::models::CrateName;
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct ErrorResponse {
@@ -17,7 +19,7 @@ pub struct ErrorDetail {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PublishRequest {
-    pub name: String,
+    pub name: CrateName,
     pub vers: Version,
     pub deps: Vec<Dependency>,
     pub features: BTreeMap<String, BTreeSet<String>>,
@@ -121,7 +123,7 @@ pub struct SearchResponse {
 
 #[derive(Serialize, Deserialize)]
 pub struct Crate {
-    pub name: String,
+    pub name: CrateName,
     pub max_version: Version,
     pub description: String,
 }
@@ -155,7 +157,7 @@ mod tests {
         println!(
             "{}",
             serde_json::to_string_pretty(&PublishRequest {
-                name: "foo".to_owned(),
+                name: "foo".parse().unwrap(),
                 vers: "0.1.0".parse().unwrap(),
                 deps: vec![Dependency {
                     name: "rand".to_owned(),
@@ -292,7 +294,7 @@ mod tests {
             "{}",
             serde_json::to_string_pretty(&SearchResponse {
                 crates: vec![Crate {
-                    name: "rand".to_owned(),
+                    name: "rand".parse().unwrap(),
                     max_version: "0.6.1".parse().unwrap(),
                     description: "Random number generators and other randomness functionality.\n"
                         .to_owned(),

@@ -112,7 +112,7 @@ pub fn remove_owners(
 pub fn search(q: String, per_page: u8) -> Json<SearchResponse> {
     Json(SearchResponse {
         crates: vec![Crate {
-            name: "rand".to_owned(),
+            name: "rand".parse().unwrap(),
             max_version: "0.6.1".parse().unwrap(),
             description: "Random number generators and other randomness functionality.\n"
                 .to_owned(),
