@@ -4,6 +4,7 @@ use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use crate::api::models::{Dependency as ApiDependency, Kind as ApiKind, PublishRequest};
 use crate::models::CrateName;
 
 #[derive(Serialize, Deserialize)]
@@ -23,6 +24,20 @@ pub struct Release {
     pub links: Option<String>,
 }
 
+impl From<PublishRequest> for Release {
+    fn from(p: PublishRequest) -> Self {
+        Self {
+            name: p.name,
+            vers: p.vers,
+            deps: p.deps.into_iter().map(Into::into).collect(),
+            cksum: String::from("TODO"),
+            features: p.features,
+            yanked: false,
+            links: p.links,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Dependency {
     pub name: String,
@@ -36,12 +51,38 @@ pub struct Dependency {
     pub package: Option<String>,
 }
 
+impl From<ApiDependency> for Dependency {
+    fn from(d: ApiDependency) -> Self {
+        Self {
+            name: d.name,
+            req: d.version_req,
+            features: d.features,
+            optional: d.optional,
+            default_features: d.default_features,
+            target: d.target,
+            kind: d.kind.into(),
+            registry: d.registry,
+            package: d.explicit_name_in_toml,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Kind {
     Dev,
     Build,
     Normal,
+}
+
+impl From<ApiKind> for Kind {
+    fn from(k: ApiKind) -> Self {
+        match k {
+            ApiKind::Dev => Self::Dev,
+            ApiKind::Build => Self::Build,
+            ApiKind::Normal => Self::Normal,
+        }
+    }
 }
 
 #[cfg(test)]

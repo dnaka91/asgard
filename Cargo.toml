@@ -45,3 +45,6 @@ features = ["helmet", "json"]
 [profile.release]
 lto = true
 panic = "abort"
+
+[dev-dependencies]
+tempfile = "3.1.0"

@@ -1,5 +1,7 @@
 #![allow(unused_variables)]
 
+use std::path::Path;
+
 use maplit::btreeset;
 use rocket::data::{FromDataFuture, FromDataSimple};
 use rocket::http::Status;
@@ -12,6 +14,8 @@ use super::models::{
     PublishResponse, RemoveOwnersRequest, RemoveOwnersResponse, SearchResponse, UnyankResponse,
     User, Warnings, YankResponse,
 };
+
+use crate::index::{self, Service as IndexService};
 
 pub struct PublishRequestWithData(PublishRequest, Vec<u8>);
 
@@ -59,6 +63,10 @@ impl FromDataSimple for PublishRequestWithData {
 
 #[put("/new", data = "<data>")]
 pub fn crates_new(data: PublishRequestWithData) -> Json<PublishResponse> {
+    let index_service = index::new(Path::new("repo")).unwrap();
+
+    index_service.add_crate(data.0).unwrap();
+
     Json(PublishResponse {
         warnings: Warnings {
             invalid_categories: btreeset![],
