@@ -5,6 +5,7 @@ use std::path::Path;
 use maplit::btreeset;
 use rocket::data::{FromDataFuture, FromDataSimple};
 use rocket::http::Status;
+use rocket::response::NamedFile;
 use rocket::{delete, get, put, Data, Outcome, Request};
 use rocket_contrib::json::Json;
 use tokio::prelude::*;
@@ -127,4 +128,9 @@ pub fn search(q: String, per_page: u8) -> Json<SearchResponse> {
         }],
         meta: Meta { total: 119 },
     })
+}
+
+#[get("/<crate_name>/<version>/download")]
+pub fn download(crate_name: String, version: String) -> NamedFile {
+    todo!()
 }

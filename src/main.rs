@@ -36,6 +36,7 @@ fn rocket() -> Rocket {
                 api::routes::add_owners,
                 api::routes::remove_owners,
                 api::routes::search,
+                api::routes::download,
             ],
         )
 }
