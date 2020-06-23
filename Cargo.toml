@@ -31,6 +31,11 @@ version = "0.99.8"
 default-features = false
 features = ["display"]
 
+[dependencies.config]
+version = "0.10.1"
+default-features = false
+features = ["toml"]
+
 [dependencies.rocket_contrib]
 git = "https://github.com/SergioBenitez/Rocket"
 branch = "async"
