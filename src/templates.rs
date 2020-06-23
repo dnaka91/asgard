@@ -8,17 +8,15 @@ use rocket::{Request, Response};
 macro_rules! responder {
     ($($name:ident),+) => {
         $(
-            #[rocket::async_trait]
-            impl<'r> Responder<'r> for $name {
-                async fn respond_to(self, _: &'r Request<'_>) -> Result<'r> {
+            impl<'r> Responder<'r, 'static> for $name {
+                fn respond_to(self, _: &'r Request<'_>) -> Result<'static> {
                     let ext = self.extension().unwrap_or_else(|| "html");
                     let resp = self.render().map_err(|_| Status::InternalServerError)?;
                     let ctype = ContentType::from_extension(ext).ok_or(Status::InternalServerError)?;
 
                     Response::build()
                         .header(ctype)
-                        .sized_body(Cursor::new(resp))
-                        .await
+                        .sized_body(resp.len(), Cursor::new(resp))
                         .ok()
                 }
             }

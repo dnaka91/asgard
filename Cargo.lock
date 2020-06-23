@@ -39,7 +39,7 @@ dependencies = [
  "nom",
  "proc-macro2 1.0.18",
  "quote 1.0.7",
- "syn 1.0.32",
+ "syn 1.0.33",
 ]
 
 [[package]]
@@ -69,7 +69,7 @@ checksum = "a265e3abeffdce30b2e26b7a11b222fe37c6067404001b434101457d0385eb92"
 dependencies = [
  "proc-macro2 1.0.18",
  "quote 1.0.7",
- "syn 1.0.32",
+ "syn 1.0.33",
 ]
 
 [[package]]
@@ -216,7 +216,7 @@ checksum = "bc655351f820d774679da6cdc23355a93de496867d8203496675162e17b1d671"
 dependencies = [
  "proc-macro2 1.0.18",
  "quote 1.0.7",
- "syn 1.0.32",
+ "syn 1.0.33",
 ]
 
 [[package]]
@@ -245,7 +245,7 @@ dependencies = [
  "bitflags",
  "proc-macro2 1.0.18",
  "quote 1.0.7",
- "syn 1.0.32",
+ "syn 1.0.33",
 ]
 
 [[package]]
@@ -268,7 +268,7 @@ checksum = "45f5098f628d02a7a0f68ddba586fb61e80edec3bdc1be3b921f4ceec60858d3"
 dependencies = [
  "proc-macro2 1.0.18",
  "quote 1.0.7",
- "syn 1.0.32",
+ "syn 1.0.33",
 ]
 
 [[package]]
@@ -391,7 +391,7 @@ dependencies = [
  "proc-macro-hack",
  "proc-macro2 1.0.18",
  "quote 1.0.7",
- "syn 1.0.32",
+ "syn 1.0.33",
 ]
 
 [[package]]
@@ -782,7 +782,7 @@ dependencies = [
  "migrations_internals",
  "proc-macro2 1.0.18",
  "quote 1.0.7",
- "syn 1.0.32",
+ "syn 1.0.33",
 ]
 
 [[package]]
@@ -1004,7 +1004,7 @@ checksum = "6a0ffd45cf79d88737d7cc85bfd5d2894bee1139b356e616fe85dc389c61aaf7"
 dependencies = [
  "proc-macro2 1.0.18",
  "quote 1.0.7",
- "syn 1.0.32",
+ "syn 1.0.33",
 ]
 
 [[package]]
@@ -1164,7 +1164,7 @@ dependencies = [
 [[package]]
 name = "rocket"
 version = "0.5.0-dev"
-source = "git+https://github.com/SergioBenitez/Rocket?branch=async#943b4be9c7b628ec7abb0eae740401e68b564dcb"
+source = "git+https://github.com/SergioBenitez/Rocket?branch=async#d63cbaf7ced84a55a91c448c02efb7598b7cce7f"
 dependencies = [
  "async-trait",
  "atty",
@@ -1188,7 +1188,7 @@ dependencies = [
 [[package]]
 name = "rocket_codegen"
 version = "0.5.0-dev"
-source = "git+https://github.com/SergioBenitez/Rocket?branch=async#943b4be9c7b628ec7abb0eae740401e68b564dcb"
+source = "git+https://github.com/SergioBenitez/Rocket?branch=async#d63cbaf7ced84a55a91c448c02efb7598b7cce7f"
 dependencies = [
  "devise",
  "indexmap",
@@ -1201,7 +1201,7 @@ dependencies = [
 [[package]]
 name = "rocket_contrib"
 version = "0.5.0-dev"
-source = "git+https://github.com/SergioBenitez/Rocket?branch=async#943b4be9c7b628ec7abb0eae740401e68b564dcb"
+source = "git+https://github.com/SergioBenitez/Rocket?branch=async#d63cbaf7ced84a55a91c448c02efb7598b7cce7f"
 dependencies = [
  "log",
  "notify",
@@ -1215,7 +1215,7 @@ dependencies = [
 [[package]]
 name = "rocket_http"
 version = "0.5.0-dev"
-source = "git+https://github.com/SergioBenitez/Rocket?branch=async#943b4be9c7b628ec7abb0eae740401e68b564dcb"
+source = "git+https://github.com/SergioBenitez/Rocket?branch=async#d63cbaf7ced84a55a91c448c02efb7598b7cce7f"
 dependencies = [
  "cookie",
  "http",
@@ -1304,22 +1304,22 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.113"
+version = "1.0.114"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6135c78461981c79497158ef777264c51d9d0f4f3fc3a4d22b915900e42dac6a"
+checksum = "5317f7588f0a5078ee60ef675ef96735a1442132dc645eb1d12c018620ed8cd3"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.113"
+version = "1.0.114"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93c5eaa17d0954cb481cdcfffe9d84fcfa7a1a9f2349271e678677be4c26ae31"
+checksum = "2a0be94b04690fbaed37cddffc5c134bf537c8e3329d53e982fe04c374978f8e"
 dependencies = [
  "proc-macro2 1.0.18",
  "quote 1.0.7",
- "syn 1.0.32",
+ "syn 1.0.33",
 ]
 
 [[package]]
@@ -1386,9 +1386,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.32"
+version = "1.0.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a994520748611c17d163e81b6c4a4b13d11b7f63884362ab2efac3aa9cf16d00"
+checksum = "e8d5d96e8cbb005d6959f119f773bfaebb5684296108fb32600c00cde305b2cd"
 dependencies = [
  "proc-macro2 1.0.18",
  "quote 1.0.7",
@@ -1599,7 +1599,7 @@ dependencies = [
  "log",
  "proc-macro2 1.0.18",
  "quote 1.0.7",
- "syn 1.0.32",
+ "syn 1.0.33",
  "wasm-bindgen-shared",
 ]
 
@@ -1621,7 +1621,7 @@ checksum = "3156052d8ec77142051a533cdd686cba889537b213f948cd1d20869926e68e92"
 dependencies = [
  "proc-macro2 1.0.18",
  "quote 1.0.7",
- "syn 1.0.32",
+ "syn 1.0.33",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]

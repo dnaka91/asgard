@@ -21,7 +21,7 @@ log = { version = "0.4.8", features = ["release_max_level_info"] }
 maplit = "1.0.2"
 rocket = { git = "https://github.com/SergioBenitez/Rocket", branch = "async" }
 semver = { version = "0.10.0", features = ["serde"] }
-serde = { version = "1.0.113", features = ["derive"] }
+serde = { version = "1.0.114", features = ["derive"] }
 serde_json = "1.0.55"
 tokio = { version = "0.2.21", features = ["blocking"] }
 url = { version = "2.1.1", features = ["serde"] }
