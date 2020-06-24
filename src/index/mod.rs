@@ -1,10 +1,11 @@
 use std::fs::{self, File, OpenOptions};
 use std::io::prelude::*;
-use std::io::{BufReader, ErrorKind};
+use std::io::{BufReader, BufWriter, ErrorKind};
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
 use git2::{ErrorCode, Repository};
+use semver::Version;
 
 use self::models::Release;
 use crate::api::models::PublishRequest;
@@ -14,6 +15,7 @@ pub mod models;
 
 pub trait Service {
     fn add_crate(&self, req: PublishRequest) -> Result<()>;
+    fn yank(&self, name: CrateName, version: Version, yank: bool) -> Result<()>;
 }
 
 pub struct ServiceImpl {
@@ -35,36 +37,16 @@ impl ServiceImpl {
             None => None,
         })
     }
-}
 
-impl Service for ServiceImpl {
-    fn add_crate(&self, req: PublishRequest) -> Result<()> {
-        let path = crate_path(&req.name);
-        let repo_path = self
-            .repo
+    fn repo_path(&self) -> &Path {
+        self.repo
             .path()
             .parent()
-            .unwrap_or_else(|| self.repo.path());
-        let repo_path = repo_path.join(&path);
+            .unwrap_or_else(|| self.repo.path())
+    }
 
-        if let Some(latest) = self.read_latest_release(&repo_path)? {
-            if latest.vers <= req.vers {
-                bail!("Only newer version allowed")
-            }
-        }
-
-        fs::create_dir_all(&repo_path.parent().context("No parent file")?)?;
-
-        let mut file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .append(true)
-            .open(&repo_path)?;
-
-        let release = Release::from(req);
-        writeln!(&mut file, "{}", serde_json::to_string(&release)?)?;
-
-        self.repo.index()?.add_path(&path)?;
+    fn commit_file(&self, path: &Path, message: &str) -> Result<()> {
+        self.repo.index()?.add_path(path)?;
         let tree = self.repo.index()?.write_tree()?;
         let tree = self.repo.find_tree(tree)?;
         let signature = self.repo.signature()?;
@@ -74,12 +56,88 @@ impl Service for ServiceImpl {
             Some("HEAD"),
             &signature,
             &signature,
-            &format!("Publish crate \"{}@{}\"", release.name, release.vers),
+            message,
             &tree,
             &[&head],
         )?;
 
         self.repo.checkout_head(None)?;
+
+        Ok(())
+    }
+}
+
+impl Service for ServiceImpl {
+    fn add_crate(&self, req: PublishRequest) -> Result<()> {
+        let path = crate_path(&req.name);
+        let repo_path = self.repo_path().join(&path);
+
+        if let Some(latest) = self.read_latest_release(&repo_path)? {
+            if req.vers <= latest.vers {
+                bail!("Only newer version allowed")
+            }
+        }
+
+        fs::create_dir_all(&repo_path.parent().context("No parent file")?)?;
+
+        let mut file = BufWriter::new(
+            OpenOptions::new()
+                .write(true)
+                .create(true)
+                .append(true)
+                .open(&repo_path)?,
+        );
+
+        let release = Release::from(req);
+        writeln!(&mut file, "{}", serde_json::to_string(&release)?)?;
+
+        file.flush()?;
+
+        self.commit_file(
+            &path,
+            &format!("Publish crate \"{}@{}\"", release.name, release.vers),
+        )?;
+
+        Ok(())
+    }
+
+    fn yank(&self, name: CrateName, version: Version, yank: bool) -> Result<()> {
+        let path = crate_path(&name);
+        let repo_path = self.repo_path().join(&path);
+
+        let f = BufReader::new(File::open(&repo_path)?);
+
+        let mut releases = f
+            .lines()
+            .map(|l| {
+                l.map_err(Into::into)
+                    .and_then(|l| serde_json::from_str(&l).map_err(Into::into))
+            })
+            .collect::<Result<Vec<Release>>>()?;
+
+        let mut rel = releases
+            .iter_mut()
+            .find(|r| r.vers == version)
+            .context("version doesn't exist")?;
+
+        rel.yanked = yank;
+
+        let mut f = BufWriter::new(File::create(repo_path)?);
+        for rel in releases {
+            writeln!(&mut f, "{}", serde_json::to_string(&rel)?)?;
+        }
+
+        f.flush()?;
+
+        self.commit_file(
+            &path,
+            &format!(
+                "{} crate \"{}@{}\"",
+                if yank { "Yank" } else { "Unyank" },
+                name,
+                version
+            ),
+        )?;
 
         Ok(())
     }
@@ -126,7 +184,6 @@ fn crate_path(name: &CrateName) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{BTreeMap, BTreeSet};
     use std::path::Path;
     use std::process::Command;
 
@@ -164,31 +221,29 @@ mod tests {
     }
 
     #[test]
-    fn service_add_crate() {
+    fn service_roundtrip() {
         let dir = create_repo();
         let service = new(dir.path()).unwrap();
 
         service
-            .add_crate(PublishRequest {
-                name: "test".parse().unwrap(),
-                vers: "1.0.0".parse().unwrap(),
-                deps: Vec::new(),
-                features: BTreeMap::new(),
-                authors: BTreeSet::new(),
-                description: None,
-                documentation: None,
-                homepage: None,
-                readme: None,
-                readme_file: None,
-                keywords: BTreeSet::new(),
-                categories: BTreeSet::new(),
-                license: Some("MIT".to_owned()),
-                license_file: None,
-                repository: None,
-                badges: BTreeMap::new(),
-                links: None,
-            })
+            .add_crate(PublishRequest::new(
+                "test".parse().unwrap(),
+                "1.0.0".parse().unwrap(),
+            ))
             .unwrap();
+
+        service
+            .add_crate(PublishRequest::new(
+                "test".parse().unwrap(),
+                "1.1.0".parse().unwrap(),
+            ))
+            .unwrap();
+
+        service
+            .yank("test".parse().unwrap(), "1.0.0".parse().unwrap(), true)
+            .unwrap();
+
+        println!("{:?}", dir.into_path());
     }
 
     #[test]

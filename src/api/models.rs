@@ -38,6 +38,31 @@ pub struct PublishRequest {
     pub links: Option<String>,
 }
 
+impl PublishRequest {
+    #[cfg(test)]
+    pub(crate) fn new(name: CrateName, vers: Version) -> Self {
+        Self {
+            name,
+            vers,
+            deps: Vec::new(),
+            features: BTreeMap::new(),
+            authors: BTreeSet::new(),
+            description: None,
+            documentation: None,
+            homepage: None,
+            readme: None,
+            readme_file: None,
+            keywords: BTreeSet::new(),
+            categories: BTreeSet::new(),
+            license: None,
+            license_file: None,
+            repository: None,
+            badges: BTreeMap::new(),
+            links: None,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Dependency {
     pub name: String,
