@@ -1,22 +1,58 @@
 #![allow(unused_variables)]
 
+use std::io::Cursor;
 use std::path::Path;
 
+use log::error;
 use maplit::btreeset;
 use rocket::data::{FromDataFuture, FromDataSimple};
-use rocket::http::Status;
-use rocket::response::NamedFile;
+use rocket::http::{ContentType, Status};
+use rocket::request::State;
+use rocket::response::{self, NamedFile, Responder, Response};
 use rocket::{delete, get, put, Data, Outcome, Request};
 use rocket_contrib::json::Json;
 use tokio::prelude::*;
 
 use super::models::{
-    AddOwnersRequest, AddOwnersResponse, Crate, ListOwnersResponse, Meta, PublishRequest,
-    PublishResponse, RemoveOwnersRequest, RemoveOwnersResponse, SearchResponse, UnyankResponse,
-    User, Warnings, YankResponse,
+    AddOwnersRequest, AddOwnersResponse, Crate, ErrorDetail, ErrorResponse, ListOwnersResponse,
+    Meta, PublishRequest, PublishResponse, RemoveOwnersRequest, RemoveOwnersResponse,
+    SearchResponse, UnyankResponse, User, Warnings, YankResponse,
 };
 
 use crate::index::{self, Service as IndexService};
+use crate::settings::Settings;
+
+type Result<T> = anyhow::Result<T, ServerError>;
+
+#[derive(Debug)]
+pub struct ServerError(anyhow::Error);
+
+impl<T: Into<anyhow::Error>> From<T> for ServerError {
+    fn from(value: T) -> Self {
+        Self(value.into())
+    }
+}
+
+impl<'r> Responder<'r, 'static> for ServerError {
+    fn respond_to(self, request: &'r Request<'_>) -> response::Result<'static> {
+        error!("{:?}", self.0);
+
+        let message = ErrorResponse {
+            errors: vec![ErrorDetail {
+                detail: self.0.to_string(),
+            }],
+        };
+
+        let mut resp = Response::build();
+
+        if let Ok(json) = serde_json::to_vec(&message) {
+            resp.header(ContentType::JSON)
+                .sized_body(json.len(), Cursor::new(json));
+        }
+
+        resp.status(Status::InternalServerError).ok()
+    }
+}
 
 pub struct PublishRequestWithData(PublishRequest, Vec<u8>);
 
@@ -63,28 +99,47 @@ impl FromDataSimple for PublishRequestWithData {
 }
 
 #[put("/new", data = "<data>")]
-pub fn crates_new(data: PublishRequestWithData) -> Json<PublishResponse> {
-    let index_service = index::new(Path::new("repo")).unwrap();
+pub fn crates_new(
+    data: PublishRequestWithData,
+    settings: State<Settings>,
+) -> Result<Json<PublishResponse>> {
+    let index_service = index::new(&settings.index.location)?;
 
-    index_service.add_crate(data.0).unwrap();
+    index_service.add_crate(data.0)?;
 
-    Json(PublishResponse {
+    Ok(Json(PublishResponse {
         warnings: Warnings {
             invalid_categories: btreeset![],
             invalid_badges: btreeset![],
             other: vec![],
         },
-    })
+    }))
 }
 
 #[delete("/<crate_name>/<version>/yank")]
-pub fn yank(crate_name: String, version: String) -> Json<YankResponse> {
-    Json(YankResponse { ok: true })
+pub fn yank(
+    crate_name: String,
+    version: String,
+    settings: State<Settings>,
+) -> Result<Json<YankResponse>> {
+    let index_service = index::new(&settings.index.location)?;
+
+    index_service.yank(crate_name.parse()?, version.parse()?, true)?;
+
+    Ok(Json(YankResponse { ok: true }))
 }
 
 #[put("/<crate_name>/<version>/unyank")]
-pub fn unyank(crate_name: String, version: String) -> Json<UnyankResponse> {
-    Json(UnyankResponse { ok: true })
+pub fn unyank(
+    crate_name: String,
+    version: String,
+    settings: State<Settings>,
+) -> Result<Json<UnyankResponse>> {
+    let index_service = index::new(&settings.index.location)?;
+
+    index_service.yank(crate_name.parse()?, version.parse()?, false)?;
+
+    Ok(Json(UnyankResponse { ok: true }))
 }
 
 #[get("/<crate_name>/owners")]
