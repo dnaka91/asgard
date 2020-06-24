@@ -191,31 +191,26 @@ mod tests {
 
     use super::*;
 
+    fn run_git(dir: &TempDir, args: &[&str]) {
+        assert!(Command::new("git")
+            .current_dir(dir.path())
+            .args(args)
+            .status()
+            .unwrap()
+            .success());
+    }
+
     fn create_repo() -> TempDir {
         let dir = tempfile::tempdir().unwrap();
 
-        assert!(Command::new("git")
-            .args(&["init"])
-            .current_dir(dir.path())
-            .status()
-            .unwrap()
-            .success());
+        run_git(&dir, &["init"]);
+        run_git(&dir, &["config", "user.email", "test@test.com"]);
+        run_git(&dir, &["config", "user.name", "Test"]);
 
         std::fs::write(dir.path().join("README.md"), &[]).unwrap();
 
-        assert!(Command::new("git")
-            .args(&["add", "."])
-            .current_dir(dir.path())
-            .status()
-            .unwrap()
-            .success());
-
-        assert!(Command::new("git")
-            .args(&["commit", "-m", "Initial commit"])
-            .current_dir(dir.path())
-            .status()
-            .unwrap()
-            .success());
+        run_git(&dir, &["add", "."]);
+        run_git(&dir, &["commit", "-m", "Initial commit"]);
 
         dir
     }
