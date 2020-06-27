@@ -1,3 +1,5 @@
+//! All data structures related to the crate index.
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use semver::{Version, VersionReq};
@@ -7,20 +9,34 @@ use url::Url;
 use crate::api::models::{Dependency as ApiDependency, Kind as ApiKind, PublishRequest};
 use crate::models::CrateName;
 
+/// The configuration of the index. This structure is placed as a JSON file with the name
+/// `config.json` at the root of the index repository. It tells cargo where to find the crate
+/// repository's API and where to download the crate data.
 #[derive(Serialize, Deserialize)]
 pub struct Config {
+    /// Download path for crate packages.
     pub dl: Url,
+    /// Main API endpoint for the crate repository.
     pub api: Url,
 }
 
+/// A single release of a crate. It describes all basic information about a crate release and is
+/// stored within the index.
 #[derive(Serialize, Deserialize)]
 pub struct Release {
+    /// Name of the crate.
     pub name: CrateName,
+    /// SemVer version of this release.
     pub vers: Version,
+    /// List of dependencies that this crate uses.
     pub deps: Vec<Dependency>,
+    /// SHA-256 checksum of the crate tarball.
     pub cksum: String,
+    /// List of features that the crate supports.
     pub features: BTreeMap<String, BTreeSet<String>>,
+    /// Whether this release is yanked (disabled for download).
     pub yanked: bool,
+    /// Linking value that is passed to the compiler to link in external libraries.
     pub links: Option<String>,
 }
 
@@ -38,16 +54,28 @@ impl From<PublishRequest> for Release {
     }
 }
 
+/// A dependency describes the reference from a crate [`Release`] to another existing crate that it
+/// uses.
 #[derive(Serialize, Deserialize)]
 pub struct Dependency {
+    /// Name of this dependency. Not a [`CrateName`] as this crate could come from another registry
+    /// with different naming restrictions.
     pub name: String,
+    /// SemVer version requirement specification. For example `^0.6`.
     pub req: VersionReq,
+    /// List of activated features on this crate as requested by the [`Release`].
     pub features: BTreeSet<String>,
+    /// Whether this dependency is optional.
     pub optional: bool,
+    /// Whether default features are enabled.
     pub default_features: bool,
+    /// Target restrictions for this dependency. It is only needed if the requirement is fullfilled.
     pub target: Option<String>,
+    /// One of the known kinds of dependencies.
     pub kind: Kind,
+    /// The registry where this crate can be found. If missing, <https://crates.io> is used.
     pub registry: Option<Url>,
+    /// Original name of the crate in case it was renamed by the [`Release`].
     pub package: Option<String>,
 }
 
@@ -67,11 +95,16 @@ impl From<ApiDependency> for Dependency {
     }
 }
 
+/// Different kinds of dependencies. This means in what stage of the build process a dependency is
+/// needed.
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Kind {
+    /// Only during development like tests, benchmarks or examples.
     Dev,
+    /// Only used in custom build scripts.
     Build,
+    /// A normal dependency, directly used by the crate. Also available for development targets.
     Normal,
 }
 

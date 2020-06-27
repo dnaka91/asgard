@@ -3,7 +3,7 @@ use std::io::prelude::*;
 use std::io::{BufReader, BufWriter, ErrorKind};
 use std::path::{Path, PathBuf};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use git2::{ErrorCode, Repository};
 use semver::Version;
 
@@ -13,16 +13,24 @@ use crate::models::CrateName;
 
 pub mod models;
 
+/// The index service that handles all functionality of the crate index. This index holds metadata
+/// information about all crates like existing versions, dependencies and so on.
 pub trait Service {
+    /// Add a new crate or version to the index. If previous versions exist, then the new version
+    /// must have a higher semver version that any other version.
     fn add_crate(&self, req: PublishRequest) -> Result<()>;
+    /// Yank or unyank a single version of an existing crate. This means that the version will not
+    /// be available for download anymore (or be available again).
     fn yank(&self, name: CrateName, version: Version, yank: bool) -> Result<()>;
 }
 
+/// Main implementation of the index [`Service`].
 pub struct ServiceImpl {
     repo: Repository,
 }
 
 impl ServiceImpl {
+    /// Load all information about a single crate and get the latest release.
     fn read_latest_release(&self, crate_path: &Path) -> Result<Option<Release>> {
         let f = match File::open(crate_path) {
             Ok(f) => f,
@@ -38,6 +46,7 @@ impl ServiceImpl {
         })
     }
 
+    /// Get the base path of the currently open repository.
     fn repo_path(&self) -> &Path {
         self.repo
             .path()
@@ -45,6 +54,7 @@ impl ServiceImpl {
             .unwrap_or_else(|| self.repo.path())
     }
 
+    /// Add and commit a single file to the index.
     fn commit_file(&self, path: &Path, message: &str) -> Result<()> {
         self.repo.index()?.add_path(path)?;
         let tree = self.repo.index()?.write_tree()?;
@@ -73,12 +83,10 @@ impl Service for ServiceImpl {
         let repo_path = self.repo_path().join(&path);
 
         if let Some(latest) = self.read_latest_release(&repo_path)? {
-            if req.vers <= latest.vers {
-                bail!("Only newer version allowed")
-            }
+            ensure!(latest.vers < req.vers, "only newer version allowed");
         }
 
-        fs::create_dir_all(&repo_path.parent().context("No parent file")?)?;
+        fs::create_dir_all(&repo_path.parent().context("no parent file")?)?;
 
         let mut file = BufWriter::new(
             OpenOptions::new()
