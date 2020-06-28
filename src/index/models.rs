@@ -4,6 +4,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use url::Url;
 
 use crate::api::models::{Dependency as ApiDependency, Kind as ApiKind, PublishRequest};
@@ -40,13 +41,13 @@ pub struct Release {
     pub links: Option<String>,
 }
 
-impl From<PublishRequest> for Release {
-    fn from(p: PublishRequest) -> Self {
+impl From<(PublishRequest, &[u8])> for Release {
+    fn from((p, d): (PublishRequest, &[u8])) -> Self {
         Self {
             name: p.name,
             vers: p.vers,
             deps: p.deps.into_iter().map(Into::into).collect(),
-            cksum: String::from("TODO"),
+            cksum: hex::encode(Sha256::digest(d)),
             features: p.features,
             yanked: false,
             links: p.links,

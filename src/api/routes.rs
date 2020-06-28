@@ -105,7 +105,7 @@ pub fn crates_new(
 ) -> Result<Json<PublishResponse>> {
     let index_service = index::new(&settings.index.location)?;
 
-    index_service.add_crate(data.0)?;
+    index_service.add_crate(data.0, &data.1)?;
 
     Ok(Json(PublishResponse {
         warnings: Warnings {

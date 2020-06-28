@@ -18,7 +18,7 @@ pub mod models;
 pub trait Service {
     /// Add a new crate or version to the index. If previous versions exist, then the new version
     /// must have a higher semver version that any other version.
-    fn add_crate(&self, req: PublishRequest) -> Result<()>;
+    fn add_crate(&self, req: PublishRequest, data: &[u8]) -> Result<()>;
     /// Yank or unyank a single version of an existing crate. This means that the version will not
     /// be available for download anymore (or be available again).
     fn yank(&self, name: CrateName, version: Version, yank: bool) -> Result<()>;
@@ -78,7 +78,7 @@ impl ServiceImpl {
 }
 
 impl Service for ServiceImpl {
-    fn add_crate(&self, req: PublishRequest) -> Result<()> {
+    fn add_crate(&self, req: PublishRequest, data: &[u8]) -> Result<()> {
         let path = crate_path(&req.name);
         let repo_path = self.repo_path().join(&path);
 
@@ -96,7 +96,7 @@ impl Service for ServiceImpl {
                 .open(&repo_path)?,
         );
 
-        let release = Release::from(req);
+        let release = Release::from((req, data));
         writeln!(&mut file, "{}", serde_json::to_string(&release)?)?;
 
         file.flush()?;
@@ -211,14 +211,14 @@ mod tests {
     fn create_repo() -> TempDir {
         let dir = tempfile::tempdir().unwrap();
 
-        run_git(&dir, &["init"]);
+        run_git(&dir, &["init", "-q"]);
         run_git(&dir, &["config", "user.email", "test@test.com"]);
         run_git(&dir, &["config", "user.name", "Test"]);
 
         std::fs::write(dir.path().join("README.md"), &[]).unwrap();
 
         run_git(&dir, &["add", "."]);
-        run_git(&dir, &["commit", "-m", "Initial commit"]);
+        run_git(&dir, &["commit", "-q", "-m", "Initial commit"]);
 
         dir
     }
@@ -229,24 +229,22 @@ mod tests {
         let service = new(dir.path()).unwrap();
 
         service
-            .add_crate(PublishRequest::new(
-                "test".parse().unwrap(),
-                "1.0.0".parse().unwrap(),
-            ))
+            .add_crate(
+                PublishRequest::new("test".parse().unwrap(), "1.0.0".parse().unwrap()),
+                &[],
+            )
             .unwrap();
 
         service
-            .add_crate(PublishRequest::new(
-                "test".parse().unwrap(),
-                "1.1.0".parse().unwrap(),
-            ))
+            .add_crate(
+                PublishRequest::new("test".parse().unwrap(), "1.1.0".parse().unwrap()),
+                &[1, 2, 3],
+            )
             .unwrap();
 
         service
             .yank("test".parse().unwrap(), "1.0.0".parse().unwrap(), true)
             .unwrap();
-
-        println!("{:?}", dir.into_path());
     }
 
     #[test]
