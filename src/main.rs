@@ -22,7 +22,14 @@ mod ui;
 fn rocket() -> Rocket {
     let settings = settings::load().unwrap();
 
-    rocket::ignite()
+    let mut config = rocket::config::RocketConfig::active_default()
+        .unwrap()
+        .active()
+        .clone();
+
+    config.set_port(settings.port);
+
+    rocket::custom(config)
         .attach(db::DbConn::fairing())
         .attach(db::DbMigrations::fairing())
         .attach(SpaceHelmet::default())

@@ -20,6 +20,6 @@ RUN apk add --no-cache ca-certificates tzdata
 
 COPY --from=builder /root/.cargo/bin/crator /app/
 
-EXPOSE 8000
+EXPOSE 8080
 
 ENTRYPOINT ["/app/crator"]
