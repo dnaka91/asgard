@@ -14,6 +14,7 @@ mod db;
 mod index;
 mod models;
 mod settings;
+mod storage;
 mod templates;
 mod ui;
 

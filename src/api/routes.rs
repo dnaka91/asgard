@@ -12,6 +12,7 @@ use rocket::response::{self, NamedFile, Responder, Response};
 use rocket::{delete, get, put, Data, Outcome, Request};
 use rocket_contrib::json::Json;
 use tokio::prelude::*;
+use tokio::task;
 
 use super::models::{
     AddOwnersRequest, AddOwnersResponse, Crate, ErrorDetail, ErrorResponse, ListOwnersResponse,
@@ -21,6 +22,7 @@ use super::models::{
 
 use crate::index::{self, Service as IndexService};
 use crate::settings::Settings;
+use crate::storage::{self, Service as StorageService};
 
 type Result<T> = anyhow::Result<T, ServerError>;
 
@@ -99,13 +101,22 @@ impl FromDataSimple for PublishRequestWithData {
 }
 
 #[put("/new", data = "<data>")]
-pub fn crates_new(
+pub async fn crates_new(
     data: PublishRequestWithData,
-    settings: State<Settings>,
+    settings: State<'_, Settings>,
 ) -> Result<Json<PublishResponse>> {
+    let storage_service = storage::new(&settings.storage.location);
     let index_service = index::new(&settings.index.location)?;
 
-    index_service.add_crate(data.0, &data.1)?;
+    storage_service
+        .store(&data.0.name, &data.0.vers, &data.1)
+        .await?;
+
+    task::spawn_blocking::<_, anyhow::Result<()>>(move || {
+        index_service.add_crate(data.0, &data.1)?;
+        Ok(())
+    })
+    .await??;
 
     Ok(Json(PublishResponse {
         warnings: Warnings {
@@ -186,6 +197,19 @@ pub fn search(q: String, per_page: u8) -> Json<SearchResponse> {
 }
 
 #[get("/<crate_name>/<version>/download")]
-pub fn download(crate_name: String, version: String) -> NamedFile {
-    todo!()
+pub async fn download(
+    crate_name: String,
+    version: String,
+    settings: State<'_, Settings>,
+) -> Result<Option<Response<'_>>> {
+    let storage_service = storage::new(&settings.storage.location);
+
+    let file = storage_service
+        .get(crate_name.parse()?, version.parse()?)
+        .await?;
+
+    match file {
+        Some(f) => Response::build().streamed_body(f).ok().map(Some),
+        None => Ok(None),
+    }
 }

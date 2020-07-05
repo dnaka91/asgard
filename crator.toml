@@ -1,4 +1,7 @@
 port = 8080
 
 [index]
-location = "repo"
+location = "temp/repo"
+
+[storage]
+location = "temp/crates"

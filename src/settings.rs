@@ -8,10 +8,16 @@ use serde::Deserialize;
 pub struct Settings {
     pub port: u16,
     pub index: Index,
+    pub storage: Storage,
 }
 
 #[derive(Deserialize)]
 pub struct Index {
+    pub location: PathBuf,
+}
+
+#[derive(Deserialize)]
+pub struct Storage {
     pub location: PathBuf,
 }
 
