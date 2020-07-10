@@ -7,7 +7,7 @@ use diesel::{Connection, SqliteConnection};
 use rocket::fairing::{AdHoc, Fairing};
 use rocket::http::Status;
 use rocket::request::{self, FromRequest};
-use rocket::{Manifest, Outcome, Request, State};
+use rocket::{Cargo, Outcome, Request, State};
 
 #[derive(Copy, Clone, Debug)]
 struct ConnectionCustomizer;
@@ -65,8 +65,8 @@ impl DbConn {
         })
     }
 
-    pub fn get_one(manifest: &Manifest) -> Option<Self> {
-        manifest
+    pub fn get_one(cargo: &Cargo) -> Option<Self> {
+        cargo
             .state::<DbConnPool>()
             .and_then(|pool| pool.0.get().ok())
             .map(Self)
