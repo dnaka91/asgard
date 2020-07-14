@@ -22,10 +22,7 @@ mod ui;
 fn rocket() -> Rocket {
     let settings = settings::load().unwrap();
 
-    let mut config = rocket::config::RocketConfig::active_default()
-        .unwrap()
-        .active()
-        .clone();
+    let mut config = rocket::config::Config::active().unwrap();
 
     config.set_port(settings.port);
 
