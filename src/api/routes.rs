@@ -5,11 +5,13 @@ use std::path::Path;
 
 use log::error;
 use maplit::btreeset;
+use rocket::data::ByteUnit;
 use rocket::data::{self, FromData, FromDataFuture};
 use rocket::http::{ContentType, Status};
+use rocket::outcome::Outcome;
 use rocket::request::State;
 use rocket::response::{self, NamedFile, Responder, Response};
-use rocket::{delete, get, put, Data, Outcome, Request};
+use rocket::{delete, get, put, Data, Request};
 use rocket_contrib::json::Json;
 use tokio::prelude::*;
 use tokio::task;
@@ -63,7 +65,7 @@ impl FromData for PublishRequestWithData {
     type Error = anyhow::Error;
 
     async fn from_data(request: &Request<'_>, data: Data) -> data::Outcome<Self, Self::Error> {
-        let mut stream = data.open();
+        let mut stream = data.open(ByteUnit::Mebibyte(10));
         let mut len_buf = [0; 4];
 
         if let Err(e) = stream.read_exact(&mut len_buf).await {

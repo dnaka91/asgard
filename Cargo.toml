@@ -11,22 +11,22 @@ repository = "https://github.com/dnaka91/crator"
 keywords = ["crates"]
 
 [dependencies]
-anyhow = "1.0.31"
-askama = { version = "0.10.2", default-features = false }
-async-trait = "0.1.36"
+anyhow = "1.0.32"
+askama = { version = "0.10.3", default-features = false }
+async-trait = "0.1.37"
 diesel = { version = "1.4.5", features = ["r2d2", "sqlite"] }
 diesel_migrations = "1.4.0"
-git2 = "0.13.6"
+git2 = "0.13.8"
 hex = "0.4.2"
 libsqlite3-sys = { version = "0.18.0", features = ["bundled"] }
-log = { version = "0.4.8", features = ["release_max_level_info"] }
+log = { version = "0.4.11", features = ["release_max_level_info"] }
 maplit = "1.0.2"
-rocket = { git = "https://github.com/SergioBenitez/Rocket", branch = "master" }
+rocket = { git = "https://github.com/SergioBenitez/Rocket.git", branch = "master" }
 semver = { version = "0.10.0", features = ["serde"] }
-serde = { version = "1.0.114", features = ["derive"] }
-serde_json = "1.0.56"
+serde = { version = "1.0.115", features = ["derive"] }
+serde_json = "1.0.57"
 sha2 = "0.9.1"
-tokio = { version = "0.2.21", features = ["blocking", "macros"] }
+tokio = { version = "0.2.22", features = ["blocking", "macros"] }
 url = { version = "2.1.1", features = ["serde"] }
 
 [dependencies.derive_more]
@@ -40,7 +40,7 @@ default-features = false
 features = ["toml"]
 
 [dependencies.rocket_contrib]
-git = "https://github.com/SergioBenitez/Rocket"
+git = "https://github.com/SergioBenitez/Rocket.git"
 branch = "master"
 default-features = false
 features = ["helmet", "json"]

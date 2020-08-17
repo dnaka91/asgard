@@ -6,8 +6,9 @@ use diesel::r2d2::{
 use diesel::{Connection, SqliteConnection};
 use rocket::fairing::{AdHoc, Fairing};
 use rocket::http::Status;
+use rocket::outcome::Outcome;
 use rocket::request::{self, FromRequest};
-use rocket::{Cargo, Outcome, Request, State};
+use rocket::{Cargo, Request, State};
 
 #[derive(Copy, Clone, Debug)]
 struct ConnectionCustomizer;

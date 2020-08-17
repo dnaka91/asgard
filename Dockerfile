@@ -1,5 +1,5 @@
 # syntax = docker/dockerfile:experimental
-FROM clux/muslrust:nightly-2020-06-10 as builder
+FROM clux/muslrust:stable as builder
 
 #COPY assets/ assets/
 COPY migrations/ migrations/
@@ -21,5 +21,6 @@ RUN apk add --no-cache ca-certificates tzdata
 COPY --from=builder /root/.cargo/bin/crator /app/
 
 EXPOSE 8080
+STOPSIGNAL SIGINT
 
 ENTRYPOINT ["/app/crator"]
