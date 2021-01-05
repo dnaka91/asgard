@@ -1,11 +1,8 @@
 #![forbid(unsafe_code)]
+#![deny(rust_2018_idioms, clippy::all)]
 #![allow(unused_imports)]
 
-#[macro_use]
-extern crate diesel;
-#[macro_use]
-extern crate diesel_migrations;
-
+use anyhow::Result;
 use rocket::{routes, Rocket};
 use rocket_contrib::helmet::SpaceHelmet;
 
@@ -18,15 +15,15 @@ mod storage;
 mod templates;
 mod ui;
 
-#[rocket::launch]
-fn rocket() -> Rocket {
+fn rocket() -> Result<Rocket> {
     let settings = settings::load().unwrap();
 
-    let mut config = rocket::config::Config::active().unwrap();
+    let config = rocket::config::Config {
+        port: settings.port,
+        ..rocket::config::Config::default()
+    };
 
-    config.set_port(settings.port);
-
-    rocket::custom(config)
+    Ok(rocket::custom(config)
         .attach(db::DbConn::fairing())
         .attach(db::DbMigrations::fairing())
         .attach(SpaceHelmet::default())
@@ -44,5 +41,18 @@ fn rocket() -> Rocket {
                 api::routes::search,
                 api::routes::download,
             ],
-        )
+        ))
+}
+
+#[rocket::main]
+async fn main() -> Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter("info,_=debug,crator=trace")
+        .with_span_events(tracing_subscriber::fmt::format::FmtSpan::CLOSE)
+        .init();
+
+    rocket()?
+        .launch()
+        .await
+        .map_err(|e| anyhow::anyhow!(e.to_string()))
 }

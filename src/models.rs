@@ -16,10 +16,9 @@ impl TryFrom<String> for CrateName {
         ensure!(
             !value.is_empty()
                 && ('a'..='z').contains(&value.chars().next().unwrap_or_default())
-                && value.chars().all(|c| match c {
-                    '0'..='9' | 'a'..='z' | '-' | '_' => true,
-                    _ => false,
-                }),
+                && value
+                    .chars()
+                    .all(|c| matches!(c, '0'..='9' | 'a'..='z' | '-' | '_')),
             "invalid crate name"
         );
 

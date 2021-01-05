@@ -2,9 +2,9 @@
 
 use std::io::Cursor;
 use std::path::Path;
+use std::{collections::BTreeSet, fmt::Display};
 
 use log::error;
-use maplit::btreeset;
 use rocket::data::ByteUnit;
 use rocket::data::{self, FromData, FromDataFuture};
 use rocket::http::{ContentType, Status};
@@ -15,6 +15,7 @@ use rocket::{delete, get, put, Data, Request};
 use rocket_contrib::json::Json;
 use tokio::prelude::*;
 use tokio::task;
+use tracing_futures::Instrument;
 
 use super::models::{
     AddOwnersRequest, AddOwnersResponse, Crate, ErrorDetail, ErrorResponse, ListOwnersResponse,
@@ -34,6 +35,12 @@ pub struct ServerError(anyhow::Error);
 impl<T: Into<anyhow::Error>> From<T> for ServerError {
     fn from(value: T) -> Self {
         Self(value.into())
+    }
+}
+
+impl Display for ServerError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }
 
@@ -102,6 +109,7 @@ impl FromData for PublishRequestWithData {
 }
 
 #[put("/new", data = "<data>")]
+#[tracing::instrument(skip(data, settings), err)]
 pub async fn crates_new(
     data: PublishRequestWithData,
     settings: State<'_, Settings>,
@@ -111,45 +119,57 @@ pub async fn crates_new(
 
     storage_service
         .store(&data.0.name, &data.0.vers, &data.1)
+        .instrument(tracing::info_span!("storage"))
         .await?;
 
     task::spawn_blocking::<_, anyhow::Result<()>>(move || {
         index_service.add_crate(data.0, &data.1)?;
         Ok(())
     })
+    .instrument(tracing::info_span!("index"))
     .await??;
 
     Ok(Json(PublishResponse {
         warnings: Warnings {
-            invalid_categories: btreeset![],
-            invalid_badges: btreeset![],
-            other: vec![],
+            invalid_categories: BTreeSet::new(),
+            invalid_badges: BTreeSet::new(),
+            other: Vec::new(),
         },
     }))
 }
 
 #[delete("/<crate_name>/<version>/yank")]
+#[tracing::instrument(skip(settings), err)]
 pub fn yank(
     crate_name: String,
     version: String,
-    settings: State<Settings>,
+    settings: State<'_, Settings>,
 ) -> Result<Json<YankResponse>> {
     let index_service = index::new(&settings.index.location)?;
 
-    index_service.yank(crate_name.parse()?, version.parse()?, true)?;
+    {
+        let span = tracing::info_span!("index");
+        let _enter = span.enter();
+        index_service.yank(crate_name.parse()?, version.parse()?, true)?;
+    }
 
     Ok(Json(YankResponse { ok: true }))
 }
 
 #[put("/<crate_name>/<version>/unyank")]
+#[tracing::instrument(skip(settings), err)]
 pub fn unyank(
     crate_name: String,
     version: String,
-    settings: State<Settings>,
+    settings: State<'_, Settings>,
 ) -> Result<Json<UnyankResponse>> {
     let index_service = index::new(&settings.index.location)?;
 
-    index_service.yank(crate_name.parse()?, version.parse()?, false)?;
+    {
+        let span = tracing::info_span!("index");
+        let _enter = span.enter();
+        index_service.yank(crate_name.parse()?, version.parse()?, false)?;
+    }
 
     Ok(Json(UnyankResponse { ok: true }))
 }
@@ -198,6 +218,7 @@ pub fn search(q: String, per_page: u8) -> Json<SearchResponse> {
 }
 
 #[get("/<crate_name>/<version>/download")]
+#[tracing::instrument(skip(settings), err)]
 pub async fn download(
     crate_name: String,
     version: String,
@@ -207,6 +228,7 @@ pub async fn download(
 
     let file = storage_service
         .get(crate_name.parse()?, version.parse()?)
+        .instrument(tracing::info_span!("storage"))
         .await?;
 
     match file {

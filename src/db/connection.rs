@@ -1,60 +1,46 @@
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
-use diesel::r2d2::{
-    ConnectionManager, CustomizeConnection, ManageConnection, Pool, PooledConnection,
-};
-use diesel::{Connection, SqliteConnection};
+use r2d2::{ManageConnection, Pool, PooledConnection};
+use r2d2_sqlite::SqliteConnectionManager;
 use rocket::fairing::{AdHoc, Fairing};
 use rocket::http::Status;
 use rocket::outcome::Outcome;
 use rocket::request::{self, FromRequest};
-use rocket::{Cargo, Request, State};
+use rocket::{Request, Rocket, State};
+use rusqlite::Connection;
 
-#[derive(Copy, Clone, Debug)]
-struct ConnectionCustomizer;
-
-impl<C> CustomizeConnection<C, diesel::r2d2::Error> for ConnectionCustomizer
-where
-    C: Connection,
-{
-    fn on_acquire(&self, conn: &mut C) -> Result<(), diesel::r2d2::Error> {
-        conn.batch_execute(
-            "\
-            PRAGMA busy_timeout = 1000;\
-            PRAGMA foreign_keys = ON;\
-            PRAGMA journal_mode = WAL;\
-            PRAGMA synchronous = NORMAL;\
-            PRAGMA wal_autocheckpoint = 1000;\
-            PRAGMA wal_checkpoint(TRUNCATE);\
-            ",
-        )
-        .map_err(diesel::r2d2::Error::QueryError)
-    }
+fn init_connection(conn: &mut Connection) -> Result<(), rusqlite::Error> {
+    conn.pragma_update(None, "busy_timeout", &1000)?;
+    conn.pragma_update(None, "foreign_keys", &"ON")?;
+    conn.pragma_update(None, "journal_mode", &"WAL")?;
+    conn.pragma_update(None, "synchronous", &"NORMAL")?;
+    conn.pragma_update(None, "wal_autocheckpoint", &1000)?;
+    conn.pragma_update(None, "wal_checkpoint", &"TRUNCATE")?;
+    Ok(())
 }
 
-struct DbConnPool(Pool<ConnectionManager<SqliteConnection>>);
+struct DbConnPool(Pool<SqliteConnectionManager>);
 
-pub struct DbConn(PooledConnection<ConnectionManager<SqliteConnection>>);
+pub struct DbConn(PooledConnection<SqliteConnectionManager>);
 
 impl DbConn {
     pub fn fairing() -> impl Fairing {
         AdHoc::on_attach("Database Pool", |rocket| async {
-            let url = if cfg!(test) { ":memory:" } else { "data.db" };
-            let manager = ConnectionManager::<SqliteConnection>::new(url);
+            let manager = if cfg!(test) {
+                SqliteConnectionManager::memory()
+            } else {
+                SqliteConnectionManager::file("data.db")
+            }
+            .with_init(init_connection);
 
             // First create a single connection to make sure all eventually locking PRAGMAs are run,
             // so we don't get any errors when spinning up the pool.
-            if let Err(e) = manager
-                .connect()
-                .and_then(|mut conn| ConnectionCustomizer.on_acquire(&mut conn))
-            {
+            if let Err(e) = manager.connect() {
                 rocket::logger::error(&format!("Failed to initialize database\n{:?}", e));
                 return Err(rocket);
             }
 
-            let pool = Pool::builder()
-                .connection_customizer(Box::new(ConnectionCustomizer))
-                .build(manager);
+            let pool = Pool::builder().build(manager);
 
             match pool {
                 Ok(p) => Ok(rocket.manage(DbConnPool(p))),
@@ -66,8 +52,8 @@ impl DbConn {
         })
     }
 
-    pub fn get_one(cargo: &Cargo) -> Option<Self> {
-        cargo
+    pub fn get_one(rocket: &Rocket) -> Option<Self> {
+        rocket
             .state::<DbConnPool>()
             .and_then(|pool| pool.0.get().ok())
             .map(Self)
@@ -75,11 +61,18 @@ impl DbConn {
 }
 
 impl Deref for DbConn {
-    type Target = SqliteConnection;
+    type Target = Connection;
 
     #[inline(always)]
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl DerefMut for DbConn {
+    #[inline(always)]
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
@@ -88,7 +81,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for DbConn {
     type Error = ();
 
     async fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
-        let guard = request.guard::<State<DbConnPool>>();
+        let guard = request.guard::<State<'_, DbConnPool>>();
         let pool = rocket::try_outcome!(guard.await).0.clone();
 
         tokio::task::spawn_blocking(move || match pool.get() {

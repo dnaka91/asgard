@@ -167,7 +167,8 @@ pub fn new(location: &Path) -> Result<impl Service> {
     Ok(ServiceImpl { repo })
 }
 
-/// Crate paths are created according to the [Index Format](https://doc.rust-lang.org/cargo/reference/registries.html#index-format).
+/// Crate paths are created according to the
+/// [Index Format](https://doc.rust-lang.org/cargo/reference/registries.html#index-format).
 ///
 /// The rules are as follows:
 /// - Packages with 1 character names are placed in a directory named `1`.

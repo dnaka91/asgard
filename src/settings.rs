@@ -4,19 +4,19 @@ use anyhow::Result;
 use config::{Config, File};
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub port: u16,
     pub index: Index,
     pub storage: Storage,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Index {
     pub location: PathBuf,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Storage {
     pub location: PathBuf,
 }
