@@ -7,8 +7,10 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use url::Url;
 
-use crate::api::models::{Dependency as ApiDependency, Kind as ApiKind, PublishRequest};
-use crate::models::CrateName;
+use crate::{
+    api::models::{Dependency as ApiDependency, Kind as ApiKind, PublishRequest},
+    models::CrateName,
+};
 
 /// The configuration of the index. This structure is placed as a JSON file with the name
 /// `config.json` at the root of the index repository. It tells cargo where to find the crate

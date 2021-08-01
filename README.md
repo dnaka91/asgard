@@ -1,4 +1,4 @@
-# 🌋 Crator
+# 🌋 Asgard
 
 > A lightweight Crate package registry.
 
@@ -38,14 +38,14 @@ To use this package registry with cargo, do the following steps:
 
     ```toml
     [registries]
-    crator = { index = "<path to your repo>" }
+    asgard = { index = "<path to your repo>" }
     ```
 
-Now you can use this registry with cargo by simply adding `--registry crator` to the relevant
+Now you can use this registry with cargo by simply adding `--registry asgard` to the relevant
 commands. For example:
 
 ```sh
-cargo search --registry crator rand
+cargo search --registry asgard rand
 ```
 
 Most API endpoints are still stubs and return dummy data, so don't expect anything actually
@@ -54,7 +54,7 @@ happening.
 ## Docker
 
 Prebuilt images are available at
-[Docker Hub](https://hub.docker.com/repository/docker/dnaka91/crator).
+[Docker Hub](https://hub.docker.com/repository/docker/dnaka91/asgard).
 
 ## License
 

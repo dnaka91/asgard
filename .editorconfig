@@ -9,3 +9,6 @@ trim_trailing_whitespace = true
 [*.html]
 indent_size = 2
 insert_final_newline = false
+
+[*.yml]
+indent_size = 2

@@ -1,6 +1,7 @@
-pub use connection::DbConn;
-pub use migrations::DbMigrations;
+pub use self::{
+    connection::{create_pool, DbConn},
+    migrations::run as run_migrations,
+};
 
 mod connection;
 mod migrations;
-mod schema;

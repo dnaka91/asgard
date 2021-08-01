@@ -1,21 +1,22 @@
-use std::fs::{self, File, OpenOptions};
-use std::io::prelude::*;
-use std::io::{BufReader, BufWriter, ErrorKind};
-use std::path::{Path, PathBuf};
+use std::{
+    fs::{self, File, OpenOptions},
+    io::{prelude::*, BufReader, BufWriter, ErrorKind},
+    path::{Path, PathBuf},
+};
 
 use anyhow::{bail, ensure, Context, Result};
-use git2::{ErrorCode, Repository};
+use git2::{build::CheckoutBuilder, ErrorCode, Repository, RepositoryInitOptions};
+use parking_lot::Mutex;
 use semver::Version;
 
 use self::models::Release;
-use crate::api::models::PublishRequest;
-use crate::models::CrateName;
+use crate::{api::models::PublishRequest, models::CrateName, settings};
 
 pub mod models;
 
 /// The index service that handles all functionality of the crate index. This index holds metadata
 /// information about all crates like existing versions, dependencies and so on.
-pub trait Service {
+pub trait Service: Send + Sync + 'static {
     /// Add a new crate or version to the index. If previous versions exist, then the new version
     /// must have a higher semver version that any other version.
     fn add_crate(&self, req: PublishRequest, data: &[u8]) -> Result<()>;
@@ -26,7 +27,7 @@ pub trait Service {
 
 /// Main implementation of the index [`Service`].
 pub struct ServiceImpl {
-    repo: Repository,
+    repo: Mutex<Repository>,
 }
 
 impl ServiceImpl {
@@ -47,33 +48,18 @@ impl ServiceImpl {
     }
 
     /// Get the base path of the currently open repository.
-    fn repo_path(&self) -> &Path {
-        self.repo
-            .path()
+    fn repo_path(&self) -> PathBuf {
+        let repo = self.repo.lock();
+        repo.path()
             .parent()
-            .unwrap_or_else(|| self.repo.path())
+            .unwrap_or_else(|| repo.path())
+            .to_owned()
     }
 
     /// Add and commit a single file to the index.
     fn commit_file(&self, path: &Path, message: &str) -> Result<()> {
-        self.repo.index()?.add_path(path)?;
-        let tree = self.repo.index()?.write_tree()?;
-        let tree = self.repo.find_tree(tree)?;
-        let signature = self.repo.signature()?;
-        let head = self.repo.head()?.peel_to_commit()?;
-
-        self.repo.commit(
-            Some("HEAD"),
-            &signature,
-            &signature,
-            message,
-            &tree,
-            &[&head],
-        )?;
-
-        self.repo.checkout_head(None)?;
-
-        Ok(())
+        let repo = self.repo.lock();
+        commit_file(&repo, path, message)
     }
 }
 
@@ -152,19 +138,88 @@ impl Service for ServiceImpl {
 }
 
 /// Create a new index service.
-pub fn new(location: &Path) -> Result<impl Service> {
-    let repo = match Repository::open(location) {
+pub fn new(settings: &settings::Index) -> Result<impl Service> {
+    let repo = match Repository::open(&settings.location) {
         Ok(r) => r,
         Err(e) => {
             if e.code() == ErrorCode::NotFound {
-                Repository::init(location)?
+                let mut options = RepositoryInitOptions::new();
+                options.initial_head("master");
+                options.description("Asgard crate index");
+
+                let repo = Repository::init_opts(&settings.location, &options)?;
+                create_initial_commit(&repo)?;
+
+                repo
             } else {
                 bail!(e);
             }
         }
     };
 
-    Ok(ServiceImpl { repo })
+    update_config(&repo, settings)?;
+
+    Ok(ServiceImpl {
+        repo: Mutex::new(repo),
+    })
+}
+
+fn update_config(repo: &Repository, settings: &settings::Index) -> Result<()> {
+    let config_path = settings.location.join("config.json");
+
+    let current_config = match File::open(&config_path) {
+        Ok(file) => Some(serde_json::from_reader::<_, settings::IndexConfig>(file)?),
+        Err(e) if e.kind() == ErrorKind::NotFound => None,
+        Err(e) => bail!(e),
+    };
+
+    if Some(&settings.config) != current_config.as_ref() {
+        let file = File::create(&config_path)?;
+        serde_json::to_writer_pretty(file, &settings.config)?;
+
+        commit_file(repo, "config.json", "Update config")?;
+    }
+
+    Ok(())
+}
+
+fn create_initial_commit(repo: &Repository) -> Result<()> {
+    const README: &str = include_str!("README.md");
+
+    let path = repo.path().parent().unwrap().join("README.md");
+    fs::write(path, README)?;
+
+    let sig = repo.signature()?;
+    let tree = {
+        let mut index = repo.index()?;
+        index.add_path(Path::new("README.md"))?;
+
+        let oid = index.write_tree()?;
+        repo.find_tree(oid)?
+    };
+
+    repo.commit(Some("HEAD"), &sig, &sig, "Initial commit", &tree, &[])?;
+    repo.checkout_head(Some(CheckoutBuilder::new().force()))?;
+
+    Ok(())
+}
+
+fn commit_file(repo: &Repository, path: impl AsRef<Path>, message: &str) -> Result<()> {
+    let sig = repo.signature()?;
+    let tree = {
+        let mut index = repo.index()?;
+        index.add_path(path.as_ref())?;
+
+        let oid = index.write_tree()?;
+        repo.find_tree(oid)?
+    };
+    let parent = repo.head()?.peel_to_commit()?;
+
+    repo.commit(Some("HEAD"), &sig, &sig, message, &tree, &[&parent])?;
+
+    repo.checkout_head(None)?;
+
+    Ok(())
 }
 
 /// Crate paths are created according to the
@@ -193,8 +248,7 @@ fn crate_path(name: &CrateName) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
-    use std::process::Command;
+    use std::{path::Path, process::Command};
 
     use tempfile::TempDir;
 
@@ -227,7 +281,14 @@ mod tests {
     #[test]
     fn service_roundtrip() {
         let dir = create_repo();
-        let service = new(dir.path()).unwrap();
+        let settings = settings::Index {
+            location: dir.path().to_owned(),
+            config: settings::IndexConfig {
+                dl: "http://localhost:8080/api/v1/crates".parse().unwrap(),
+                api: "http://localhost:8080".parse().unwrap(),
+            },
+        };
+        let service = new(&settings).unwrap();
 
         service
             .add_crate(

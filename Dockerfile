@@ -1,7 +1,7 @@
-# syntax = docker/dockerfile:experimental
+# syntax = docker/dockerfile:1.2
 FROM clux/muslrust:stable as builder
 
-#COPY assets/ assets/
+WORKDIR /volume
 COPY migrations/ migrations/
 COPY src/ src/
 COPY templates/ templates/
@@ -12,15 +12,13 @@ RUN --mount=type=cache,target=/root/.cargo/git \
     --mount=type=cache,target=/volume/target \
     cargo install --locked --path .
 
-FROM alpine:3.12
+RUN strip --strip-all /root/.cargo/bin/asgard
 
-WORKDIR /data
+FROM scratch
 
-RUN apk add --no-cache ca-certificates tzdata
-
-COPY --from=builder /root/.cargo/bin/crator /app/
+COPY --from=builder /root/.cargo/bin/asgard /bin/
 
 EXPOSE 8080
 STOPSIGNAL SIGINT
 
-ENTRYPOINT ["/app/crator"]
+ENTRYPOINT ["/bin/asgard"]

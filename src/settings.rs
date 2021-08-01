@@ -1,8 +1,7 @@
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
-use anyhow::Result;
-use config::{Config, File};
-use serde::Deserialize;
+use anyhow::{bail, Result};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
 pub struct Settings {
@@ -14,6 +13,13 @@ pub struct Settings {
 #[derive(Debug, Deserialize)]
 pub struct Index {
     pub location: PathBuf,
+    pub config: IndexConfig,
+}
+
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct IndexConfig {
+    pub dl: String,
+    pub api: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -22,16 +28,15 @@ pub struct Storage {
 }
 
 pub fn load() -> Result<Settings> {
-    let mut s = Config::new();
+    let locations = &[
+        concat!("/etc/", env!("CARGO_CRATE_NAME"), "/config.toml"),
+        concat!("/app/", env!("CARGO_CRATE_NAME"), ".toml"),
+        concat!(env!("CARGO_CRATE_NAME"), ".toml"),
+    ];
+    let buf = locations.iter().find_map(|loc| fs::read(loc).ok());
 
-    s.merge(File::with_name("/app/crator.toml").required(false))?;
-    s.merge(File::with_name("crator.toml").required(false))?;
-
-    if let Ok(p) = std::env::var("PORT") {
-        if let Ok(p) = p.parse::<i64>() {
-            s.set("port", p)?;
-        }
+    match buf {
+        Some(buf) => Ok(toml::from_slice(&buf)?),
+        None => bail!("failed finding settings"),
     }
-
-    s.try_into().map_err(Into::into)
 }

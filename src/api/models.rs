@@ -158,6 +158,12 @@ pub struct Meta {
     pub total: u64,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct SearchQuery {
+    pub q: String,
+    pub per_page: u8,
+}
+
 #[cfg(test)]
 mod tests {
     use maplit::{btreemap, btreeset};

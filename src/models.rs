@@ -1,5 +1,7 @@
-use std::convert::{TryFrom, TryInto};
-use std::str::FromStr;
+use std::{
+    convert::{TryFrom, TryInto},
+    str::FromStr,
+};
 
 use anyhow::ensure;
 use derive_more::Display;

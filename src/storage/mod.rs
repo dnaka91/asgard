@@ -1,12 +1,16 @@
-use std::io::ErrorKind;
-use std::path::Path;
-use std::pin::Pin;
+use std::{
+    io::ErrorKind,
+    path::{Path, PathBuf},
+    pin::Pin,
+};
 
 use anyhow::{bail, Result};
 use async_trait::async_trait;
 use semver::Version;
-use tokio::fs::{self, File};
-use tokio::prelude::*;
+use tokio::{
+    fs::{self, File},
+    io::AsyncRead,
+};
 
 use crate::models::CrateName;
 
@@ -15,21 +19,21 @@ type PinnedRead = Pin<Box<dyn AsyncRead + Send>>;
 /// The storage service that manages storing and loading crate content. The content is the source
 /// code tarball packaged by cargo and uploaded with a new release.
 #[async_trait]
-pub trait Service {
+pub trait Service: Send + Sync + 'static {
     /// Store a new crate tarball in the storage with given name and version.
     async fn store(&self, name: &CrateName, version: &Version, data: &[u8]) -> Result<()>;
     /// Try to locate the crate data identified by name and version and open it for reading if it
     /// exists.
-    async fn get(&self, name: CrateName, version: Version) -> Result<Option<PinnedRead>>;
+    async fn get(&self, name: &CrateName, version: &Version) -> Result<Option<PinnedRead>>;
 }
 
 /// Main implementation of the storage [`Service`].
-struct ServiceImpl<'a> {
-    location: &'a Path,
+struct ServiceImpl {
+    location: PathBuf,
 }
 
 #[async_trait]
-impl<'a> Service for ServiceImpl<'a> {
+impl Service for ServiceImpl {
     async fn store(&self, name: &CrateName, version: &Version, data: &[u8]) -> Result<()> {
         let out = self.location.join(name.as_ref());
 
@@ -42,7 +46,7 @@ impl<'a> Service for ServiceImpl<'a> {
         Ok(())
     }
 
-    async fn get(&self, name: CrateName, version: Version) -> Result<Option<PinnedRead>> {
+    async fn get(&self, name: &CrateName, version: &Version) -> Result<Option<PinnedRead>> {
         let file_name = self
             .location
             .join(name.as_ref())
@@ -57,8 +61,10 @@ impl<'a> Service for ServiceImpl<'a> {
 }
 
 /// Create a new storage service.
-pub fn new(location: &Path) -> impl Service + '_ {
-    ServiceImpl { location }
+pub fn new(location: &Path) -> impl Service {
+    ServiceImpl {
+        location: location.to_owned(),
+    }
 }
 
 #[cfg(test)]
@@ -76,14 +82,14 @@ mod tests {
             .unwrap();
 
         let reader = service
-            .get("test".parse().unwrap(), "1.0.0".parse().unwrap())
+            .get(&"test".parse().unwrap(), &"1.0.0".parse().unwrap())
             .await
             .unwrap();
 
         assert!(reader.is_some());
 
         let reader = service
-            .get("test".parse().unwrap(), "2.0.0".parse().unwrap())
+            .get(&"test".parse().unwrap(), &"2.0.0".parse().unwrap())
             .await
             .unwrap();
 
