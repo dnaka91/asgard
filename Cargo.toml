@@ -11,26 +11,26 @@ repository = "https://github.com/dnaka91/asgard"
 keywords = ["crates"]
 
 [dependencies]
-anyhow = "1.0.41"
+anyhow = "1.0.42"
 askama = { version = "0.10.5", default-features = false, features = ["with-warp"] }
 askama_warp = "0.11.0"
-async-trait = "0.1.50"
+async-trait = "0.1.51"
 derive_more = { version = "0.99.16", default-features = false, features = ["display"] }
 git2 = "0.13.20"
 hex = "0.4.3"
-hyper = "0.14.10"
+hyper = "0.14.11"
 log = { version = "0.4.14", features = ["release_max_level_info"] }
 parking_lot = "0.11.1"
 r2d2 = "0.8.9"
 r2d2_sqlite = "0.18.0"
-refinery = { version = "0.5.0", features = ["rusqlite"], git = "https://github.com/rust-db/refinery.git", rev = "cfe5f7594fe2c2a0ae8b8947bd7fb4a3fbc1b788" }
+refinery = { version = "0.6.0", features = ["rusqlite"] }
 rusqlite = "0.25.3"
-semver = { version = "1.0.3", features = ["serde"] }
-serde = { version = "1.0.126", features = ["derive"] }
-serde_json = "1.0.64"
+semver = { version = "1.0.4", features = ["serde"] }
+serde = { version = "1.0.127", features = ["derive"] }
+serde_json = "1.0.66"
 sha2 = "0.9.5"
 thiserror = "1.0.26"
-tokio = { version = "1.8.1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.9.0", features = ["macros", "rt-multi-thread"] }
 tokio-util = "0.6.7"
 toml = "0.5.8"
 tracing = { version = "0.1.26", features = ["release_max_level_info"] }
