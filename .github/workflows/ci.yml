@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust: [stable, beta, nightly]
+        toolchain: [stable, beta, nightly]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -18,13 +18,23 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ matrix.rust }}
+          toolchain: ${{ matrix.toolchain }}
           override: true
+      - name: Configure cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: test-${{ runner.os }}-cargo-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
       - name: Test
         uses: actions-rs/cargo@v1
         with:
           command: test
-        continue-on-error: ${{ matrix.rust == 'nightly' }}
+        continue-on-error: ${{ matrix.toolchain == 'nightly' }}
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -47,6 +57,16 @@ jobs:
         with:
           toolchain: stable
           override: true
+      - name: Configure cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: lint-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Run clippy
         uses: actions-rs/cargo@v1
         with:
