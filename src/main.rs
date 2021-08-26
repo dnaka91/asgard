@@ -17,6 +17,11 @@ mod storage;
 mod templates;
 mod ui;
 
+#[cfg(debug_assertions)]
+const ADDRESS: [u8; 4] = [127, 0, 0, 1];
+#[cfg(not(debug_assertions))]
+const ADDRESS: [u8; 4] = [0, 0, 0, 0];
+
 // fn rocket() -> Result<Rocket> {
 //     let settings = settings::load()?;
 
@@ -75,7 +80,7 @@ async fn launch_warp() -> Result<()> {
     let routes = api::filters::api(index, storage).or(ui::filters::ui());
 
     warp::serve(routes)
-        .run(([127, 0, 0, 1], settings.port))
+        .run((ADDRESS, settings.port))
         .await;
 
     Ok(())
