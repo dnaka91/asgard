@@ -79,9 +79,7 @@ async fn launch_warp() -> Result<()> {
 
     let routes = api::filters::api(index, storage).or(ui::filters::ui());
 
-    warp::serve(routes)
-        .run((ADDRESS, settings.port))
-        .await;
+    warp::serve(routes).run((ADDRESS, settings.port)).await;
 
     Ok(())
 }
