@@ -20,17 +20,17 @@ git2 = "0.13.21"
 hex = "0.4.3"
 hyper = "0.14.12"
 log = "0.4.14"
-parking_lot = "0.11.1"
+parking_lot = "0.11.2"
 r2d2 = "0.8.9"
 r2d2_sqlite = "0.18.0"
 refinery = { version = "0.6.0", features = ["rusqlite"] }
 rusqlite = "0.25.3"
 semver = { version = "1.0.4", features = ["serde"] }
-serde = { version = "1.0.129", features = ["derive"] }
-serde_json = "1.0.66"
-sha2 = "0.9.5"
-thiserror = "1.0.26"
-tokio = { version = "1.10.1", features = ["macros", "rt-multi-thread"] }
+serde = { version = "1.0.130", features = ["derive"] }
+serde_json = "1.0.67"
+sha2 = "0.9.6"
+thiserror = "1.0.28"
+tokio = { version = "1.11.0", features = ["macros", "rt-multi-thread"] }
 tokio-util = "0.6.7"
 toml = "0.5.8"
 tracing = "0.1.26"
