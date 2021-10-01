@@ -16,7 +16,7 @@ askama = { version = "0.10.5", default-features = false, features = ["with-warp"
 askama_warp = "0.11.0"
 async-trait = "0.1.51"
 derive_more = { version = "0.99.16", default-features = false, features = ["display"] }
-git2 = "0.13.21"
+git2 = "0.13.23"
 hex = "0.4.3"
 hyper = "0.14.12"
 log = "0.4.14"
