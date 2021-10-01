@@ -11,7 +11,7 @@ repository = "https://github.com/dnaka91/asgard"
 keywords = ["crates"]
 
 [dependencies]
-anyhow = "1.0.43"
+anyhow = "1.0.44"
 askama = { version = "0.10.5", default-features = false, features = ["with-warp"] }
 askama_warp = "0.11.0"
 async-trait = "0.1.51"
