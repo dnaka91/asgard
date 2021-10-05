@@ -11,14 +11,14 @@ repository = "https://github.com/dnaka91/asgard"
 keywords = ["crates"]
 
 [dependencies]
-anyhow = "1.0.43"
+anyhow = "1.0.44"
 askama = { version = "0.10.5", default-features = false, features = ["with-warp"] }
 askama_warp = "0.11.0"
 async-trait = "0.1.51"
 derive_more = { version = "0.99.16", default-features = false, features = ["display"] }
-git2 = "0.13.21"
+git2 = "0.13.23"
 hex = "0.4.3"
-hyper = "0.14.12"
+hyper = "0.14.13"
 log = "0.4.14"
 parking_lot = "0.11.2"
 r2d2 = "0.8.9"
@@ -27,14 +27,14 @@ refinery = { version = "0.6.0", features = ["rusqlite"] }
 rusqlite = "0.25.3"
 semver = { version = "1.0.4", features = ["serde"] }
 serde = { version = "1.0.130", features = ["derive"] }
-serde_json = "1.0.67"
-sha2 = "0.9.6"
-thiserror = "1.0.28"
-tokio = { version = "1.11.0", features = ["macros", "rt-multi-thread"] }
-tokio-util = "0.6.7"
+serde_json = "1.0.68"
+sha2 = "0.9.8"
+thiserror = "1.0.29"
+tokio = { version = "1.12.0", features = ["macros", "rt-multi-thread"] }
+tokio-util = "0.6.8"
 toml = "0.5.8"
-tracing = "0.1.26"
-tracing-subscriber = "0.2.20"
+tracing = "0.1.28"
+tracing-subscriber = "0.2.24"
 url = { version = "2.2.2", features = ["serde"] }
 warp = { version = "0.3.1", default-features = false }
 
