@@ -41,11 +41,18 @@ impl DerefMut for DbConn {
     }
 }
 
+#[cfg(debug_assertions)]
+const DB_PATH: &str = "data.db";
+#[cfg(not(debug_assertions))]
+const DB_PATH: &str = concat!("/var/lib/", env!("CARGO_PKG_NAME"), "/data.db");
+
 pub fn create_pool() -> Result<DbConnPool> {
     let manager = if cfg!(test) {
         SqliteConnectionManager::memory()
     } else {
-        SqliteConnectionManager::file("data.db")
+        #[cfg(not(debug_assertions))]
+        std::fs::create_dir_all(concat!("/var/lib/", env!("CARGO_PKG_NAME")))?;
+        SqliteConnectionManager::file(DB_PATH)
     }
     .with_init(init_connection);
 
