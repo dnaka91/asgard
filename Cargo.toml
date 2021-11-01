@@ -19,7 +19,7 @@ async-trait = "0.1.51"
 derive_more = { version = "0.99.16", default-features = false, features = ["display"] }
 git2 = { version = "0.13.23", features = ["vendored-libgit2", "vendored-openssl"] }
 hex = "0.4.3"
-hyper = "0.14.13"
+hyper = "0.14.14"
 log = "0.4.14"
 parking_lot = "0.11.2"
 r2d2 = "0.8.9"
