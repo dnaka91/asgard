@@ -24,7 +24,7 @@ log = "0.4.14"
 parking_lot = "0.11.2"
 r2d2 = "0.8.9"
 r2d2_sqlite = "0.18.0"
-refinery = { version = "0.6.0", features = ["rusqlite"] }
+refinery = { version = "0.7.0", features = ["rusqlite"] }
 rusqlite = { version = "0.25.3", features = ["bundled"] }
 semver = { version = "1.0.4", features = ["serde"] }
 serde = { version = "1.0.130", features = ["derive"] }
