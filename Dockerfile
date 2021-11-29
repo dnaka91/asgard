@@ -14,7 +14,7 @@ COPY Cargo.lock Cargo.toml ./
 RUN cargo build --release && \
     strip --strip-all target/release/asgard
 
-FROM alpine:3.14 as newuser
+FROM alpine:3.15.0 as newuser
 
 RUN echo "asgard:x:1000:" > /tmp/group && \
     echo "asgard:x:1000:1000::/dev/null:/sbin/nologin" > /tmp/passwd
