@@ -2,7 +2,7 @@ FROM rust:1.58-alpine as builder
 
 WORKDIR /volume
 
-RUN apk add --no-cache build-base=~0.5 musl-dev=~1.2 perl=~5.32
+RUN apk add --no-cache build-base=~0.5 musl-dev=~1.2 perl=~5.34
 
 WORKDIR /volume
 
