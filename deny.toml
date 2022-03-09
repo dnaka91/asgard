@@ -7,3 +7,10 @@ allow = [
 exceptions = [
     { allow = ["AGPL-3.0"], name = "asgard", version = "*" },
 ]
+
+[bans]
+skip = [
+    { name = "parking_lot", version = "=0.11.2" },
+    { name = "parking_lot_core", version = "=0.8.5" },
+    { name = "tokio-util", version = "=0.6.9" },
+]
