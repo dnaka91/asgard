@@ -11,6 +11,7 @@ use tokio::{
     fs::{self, File},
     io::AsyncRead,
 };
+use tracing::instrument;
 
 use crate::models::CrateName;
 
@@ -34,6 +35,7 @@ struct ServiceImpl {
 
 #[async_trait]
 impl Service for ServiceImpl {
+    #[instrument(skip_all)]
     async fn store(&self, name: &CrateName, version: &Version, data: &[u8]) -> Result<()> {
         let out = self.location.join(name.as_ref());
 
@@ -46,6 +48,7 @@ impl Service for ServiceImpl {
         Ok(())
     }
 
+    #[instrument(skip_all)]
     async fn get(&self, name: &CrateName, version: &Version) -> Result<Option<PinnedRead>> {
         let file_name = self
             .location

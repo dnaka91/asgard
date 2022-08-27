@@ -8,6 +8,7 @@ use anyhow::{bail, ensure, Context, Result};
 use git2::{build::CheckoutBuilder, ErrorCode, Repository, RepositoryInitOptions};
 use parking_lot::Mutex;
 use semver::Version;
+use tracing::instrument;
 
 use self::models::Release;
 use crate::{api::models::PublishRequest, models::CrateName, settings};
@@ -64,6 +65,7 @@ impl ServiceImpl {
 }
 
 impl Service for ServiceImpl {
+    #[instrument(skip_all)]
     fn add_crate(&self, req: PublishRequest, data: &[u8]) -> Result<()> {
         let path = crate_path(&req.name);
         let repo_path = self.repo_path().join(&path);
@@ -95,6 +97,7 @@ impl Service for ServiceImpl {
         Ok(())
     }
 
+    #[instrument(skip_all)]
     fn yank(&self, name: CrateName, version: Version, yank: bool) -> Result<()> {
         let path = crate_path(&name);
         let repo_path = self.repo_path().join(&path);

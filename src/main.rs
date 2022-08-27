@@ -4,8 +4,16 @@
 use std::sync::Arc;
 
 use anyhow::Result;
+use opentelemetry::{
+    global, runtime,
+    sdk::{trace, Resource},
+};
+use opentelemetry_otlp::WithExportConfig;
+use opentelemetry_semantic_conventions::resource;
+use settings::{Settings, Tracing};
 use tokio::sync::Mutex;
-use tracing_subscriber::fmt::format::FmtSpan;
+use tracing::error;
+use tracing_subscriber::{fmt::format::FmtSpan, prelude::*, EnvFilter};
 use warp::Filter;
 
 mod api;
@@ -53,12 +61,40 @@ const ADDRESS: [u8; 4] = [0, 0, 0, 0];
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt()
-        .with_env_filter("info,asgard=trace,warp=debug")
-        .with_span_events(FmtSpan::CLOSE)
+    let mut settings = settings::load()?;
+
+    let opentelemetry = settings
+        .tracing
+        .take()
+        .map(|settings: Tracing| {
+            global::set_error_handler(|error| {
+                error!(target: "opentelemetry", %error);
+            })?;
+
+            let tracer = opentelemetry_otlp::new_pipeline()
+                .tracing()
+                .with_exporter(
+                    opentelemetry_otlp::new_exporter()
+                        .tonic()
+                        .with_endpoint(settings.otlp.endpoint),
+                )
+                .with_trace_config(trace::config().with_resource(Resource::new([
+                    resource::SERVICE_NAME.string(env!("CARGO_CRATE_NAME")),
+                    resource::SERVICE_VERSION.string(env!("CARGO_PKG_VERSION")),
+                ])))
+                .install_batch(runtime::Tokio)?;
+
+            anyhow::Ok(tracing_opentelemetry::layer().with_tracer(tracer))
+        })
+        .transpose()?;
+
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer().with_span_events(FmtSpan::CLOSE))
+        .with(opentelemetry)
+        .with(EnvFilter::builder().parse("info,asgard=trace,warp=debug")?)
         .init();
 
-    launch_warp().await
+    launch_warp(settings).await
 }
 
 // async fn launch_rocket() -> Result<()> {
@@ -68,9 +104,7 @@ async fn main() -> Result<()> {
 //         .map_err(|e| anyhow::anyhow!(e.to_string()))
 // }
 
-async fn launch_warp() -> Result<()> {
-    let settings = settings::load()?;
-
+async fn launch_warp(settings: Settings) -> Result<()> {
     let pool = db::create_pool()?;
     db::run_migrations(pool.get()?)?;
 

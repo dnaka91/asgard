@@ -8,6 +8,7 @@ use hyper::{
 use semver::Version;
 use tokio::{sync::Mutex, task};
 use tokio_util::codec::{BytesCodec, FramedRead};
+use tracing::instrument;
 use warp::{reply::Response, Rejection, Reply};
 
 use super::{
@@ -49,7 +50,7 @@ impl PublishRequestWithData {
     }
 }
 
-#[tracing::instrument(skip(data, storage, index))]
+#[instrument(skip(data, storage, index))]
 pub async fn crates_new(
     data: Bytes,
     storage: Arc<Mutex<impl storage::Service>>,
@@ -77,7 +78,7 @@ pub async fn crates_new(
     }))
 }
 
-#[tracing::instrument(skip(index))]
+#[instrument(skip(index))]
 pub async fn yank(
     name: CrateName,
     version: Version,
@@ -90,7 +91,7 @@ pub async fn yank(
     Ok(warp::reply::json(&YankResponse { ok: true }))
 }
 
-#[tracing::instrument(skip(index))]
+#[instrument(skip(index))]
 pub async fn unyank(
     name: CrateName,
     version: Version,
@@ -103,7 +104,7 @@ pub async fn unyank(
     Ok(warp::reply::json(&UnyankResponse { ok: true }))
 }
 
-#[tracing::instrument]
+#[instrument]
 pub async fn list_owners(_name: CrateName) -> Result<impl Reply, Infallible> {
     Ok(warp::reply::json(&ListOwnersResponse {
         users: vec![User {
@@ -114,7 +115,7 @@ pub async fn list_owners(_name: CrateName) -> Result<impl Reply, Infallible> {
     }))
 }
 
-#[tracing::instrument(skip(_req))]
+#[instrument(skip(_req))]
 pub async fn add_owners(
     _name: CrateName,
     _req: AddOwnersRequest,
@@ -125,7 +126,7 @@ pub async fn add_owners(
     }))
 }
 
-#[tracing::instrument(skip(_req))]
+#[instrument(skip(_req))]
 pub async fn remove_owners(
     _name: CrateName,
     _req: RemoveOwnersRequest,
@@ -136,7 +137,7 @@ pub async fn remove_owners(
     }))
 }
 
-#[tracing::instrument]
+#[instrument]
 pub async fn search(_query: SearchQuery) -> Result<impl Reply, Infallible> {
     Ok(warp::reply::json(&SearchResponse {
         crates: vec![Crate {
@@ -149,7 +150,7 @@ pub async fn search(_query: SearchQuery) -> Result<impl Reply, Infallible> {
     }))
 }
 
-#[tracing::instrument(skip(storage))]
+#[instrument(skip(storage))]
 pub async fn download(
     name: CrateName,
     version: Version,

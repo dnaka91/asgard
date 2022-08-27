@@ -8,6 +8,8 @@ pub struct Settings {
     pub port: u16,
     pub index: Index,
     pub storage: Storage,
+    #[serde(default)]
+    pub tracing: Option<Tracing>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -25,6 +27,16 @@ pub struct IndexConfig {
 #[derive(Debug, Deserialize)]
 pub struct Storage {
     pub location: PathBuf,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Tracing {
+    pub otlp: Otlp,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Otlp {
+    pub endpoint: String,
 }
 
 pub fn load() -> Result<Settings> {
