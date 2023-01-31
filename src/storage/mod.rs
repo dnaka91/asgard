@@ -41,7 +41,7 @@ impl Service for ServiceImpl {
 
         fs::create_dir_all(&out).await?;
 
-        let out = out.join(format!("{}-{}.crate", name, version));
+        let out = out.join(format!("{name}-{version}.crate"));
 
         fs::write(out, data).await?;
 
@@ -53,7 +53,7 @@ impl Service for ServiceImpl {
         let file_name = self
             .location
             .join(name.as_ref())
-            .join(format!("{}-{}.crate", name, version));
+            .join(format!("{name}-{version}.crate"));
 
         match File::open(file_name).await {
             Ok(f) => Ok(Some(Box::pin(f))),

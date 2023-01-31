@@ -11,36 +11,36 @@ repository = "https://github.com/dnaka91/asgard"
 keywords = ["crates"]
 
 [dependencies]
-anyhow = "1.0.62"
+anyhow = "1.0.68"
 askama = { version = "0.11.1", default-features = false, features = ["with-warp"] }
 askama_warp = "0.12.0"
-async-trait = "0.1.57"
+async-trait = "0.1.64"
 derive_more = { version = "0.99.17", default-features = false, features = ["display"] }
-git2 = { version = "0.15.0", features = ["vendored-libgit2", "vendored-openssl"] }
+git2 = { version = "0.16.1", features = ["vendored-libgit2", "vendored-openssl"] }
 hex = "0.4.3"
-hyper = "0.14.20"
+hyper = "0.14.23"
 log = "0.4.17"
-opentelemetry = { version = "0.17.0", features = ["rt-tokio", "trace"] }
-opentelemetry-otlp = { version = "0.10.0", features = ["trace"] }
-opentelemetry-semantic-conventions = "0.9.0"
+opentelemetry = { version = "0.18.0", features = ["rt-tokio", "trace"] }
+opentelemetry-otlp = { version = "0.11.0", features = ["trace"] }
+opentelemetry-semantic-conventions = "0.10.0"
 parking_lot = "0.12.1"
 r2d2 = "0.8.10"
-r2d2_sqlite = "0.19.0"
-refinery = { version = "0.8.6", features = ["rusqlite"] }
-rusqlite = { version = "0.26.3", features = ["bundled"] }
-semver = { version = "1.0.13", features = ["serde"] }
-serde = { version = "1.0.144", features = ["derive"] }
-serde_json = "1.0.85"
-sha2 = "0.10.2"
-thiserror = "1.0.32"
-tokio = { version = "1.20.1", features = ["macros", "rt-multi-thread"] }
-tokio-util = { version = "0.7.3", features = ["codec"] }
-toml = "0.5.9"
-tracing = "0.1.36"
-tracing-opentelemetry = "0.17.4"
-tracing-subscriber = { version = "0.3.15", features = ["env-filter"] }
-url = { version = "2.2.2", features = ["serde"] }
-warp = { version = "0.3.2", default-features = false }
+r2d2_sqlite = "0.21.0"
+refinery = { version = "0.8.7", features = ["rusqlite"] }
+rusqlite = { version = "0.28.0", features = ["bundled"] }
+semver = { version = "1.0.16", features = ["serde"] }
+serde = { version = "1.0.152", features = ["derive"] }
+serde_json = "1.0.91"
+sha2 = "0.10.6"
+thiserror = "1.0.38"
+tokio = { version = "1.25.0", features = ["macros", "rt-multi-thread"] }
+tokio-util = { version = "0.7.4", features = ["codec"] }
+toml = "0.7.1"
+tracing = "0.1.37"
+tracing-opentelemetry = "0.18.0"
+tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
+url = { version = "2.3.1", features = ["serde"] }
+warp = { version = "0.3.3", default-features = false }
 
 [profile.release]
 lto = true

@@ -6,12 +6,12 @@ use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::Connection;
 
 fn init_connection(conn: &mut Connection) -> Result<(), rusqlite::Error> {
-    conn.pragma_update(None, "busy_timeout", &1000)?;
-    conn.pragma_update(None, "foreign_keys", &"ON")?;
-    conn.pragma_update(None, "journal_mode", &"WAL")?;
-    conn.pragma_update(None, "synchronous", &"NORMAL")?;
-    conn.pragma_update(None, "wal_autocheckpoint", &1000)?;
-    conn.pragma_update(None, "wal_checkpoint", &"TRUNCATE")?;
+    conn.pragma_update(None, "busy_timeout", 1000)?;
+    conn.pragma_update(None, "foreign_keys", "ON")?;
+    conn.pragma_update(None, "journal_mode", "WAL")?;
+    conn.pragma_update(None, "synchronous", "NORMAL")?;
+    conn.pragma_update(None, "wal_autocheckpoint", 1000)?;
+    conn.pragma_update(None, "wal_checkpoint", "TRUNCATE")?;
     Ok(())
 }
 

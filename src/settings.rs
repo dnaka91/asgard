@@ -45,10 +45,10 @@ pub fn load() -> Result<Settings> {
         concat!("/app/", env!("CARGO_PKG_NAME"), ".toml"),
         concat!(env!("CARGO_PKG_NAME"), ".toml"),
     ];
-    let buf = locations.iter().find_map(|loc| fs::read(loc).ok());
+    let buf = locations.iter().find_map(|loc| fs::read_to_string(loc).ok());
 
     match buf {
-        Some(buf) => Ok(toml::from_slice(&buf)?),
+        Some(buf) => Ok(toml::from_str(&buf)?),
         None => bail!("failed finding settings"),
     }
 }

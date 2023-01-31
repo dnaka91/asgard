@@ -74,7 +74,7 @@ impl Service for ServiceImpl {
             ensure!(latest.vers < req.vers, "only newer version allowed");
         }
 
-        fs::create_dir_all(&repo_path.parent().context("no parent file")?)?;
+        fs::create_dir_all(repo_path.parent().context("no parent file")?)?;
 
         let mut file = BufWriter::new(
             OpenOptions::new()
@@ -273,7 +273,7 @@ mod tests {
         run_git(&dir, &["config", "user.email", "test@test.com"]);
         run_git(&dir, &["config", "user.name", "Test"]);
 
-        std::fs::write(dir.path().join("README.md"), &[]).unwrap();
+        std::fs::write(dir.path().join("README.md"), []).unwrap();
 
         run_git(&dir, &["add", "."]);
         run_git(&dir, &["commit", "-q", "-m", "Initial commit"]);
